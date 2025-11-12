@@ -227,7 +227,53 @@ def get_user_by_cpf(cpf):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# 5. Rota para ler UUID de cartão NFC
+# 5. Rota para associar/atualizar UUID de cartão NFC
+@app.route('/api/users/nfc', methods=['POST'])
+def associate_nfc_card():
+    try:
+        data = request.get_json()
+        
+        # Validação de campos obrigatórios
+        if not data:
+            return jsonify({'error': 'Dados JSON são obrigatórios'}), 400
+        
+        if not data.get('cpf'):
+            return jsonify({'error': 'CPF é obrigatório'}), 400
+        
+        if not data.get('nfc_card_uuid'):
+            return jsonify({'error': 'nfc_card_uuid é obrigatório'}), 400
+        
+        # Limpar e validar CPF
+        cpf_clean = re.sub(r'[^0-9]', '', data['cpf'])
+        if not validate_cpf(cpf_clean):
+            return jsonify({'error': 'CPF inválido. Deve conter 11 dígitos numéricos'}), 400
+        
+        # Buscar usuário por CPF
+        user = User.query.filter_by(cpf=cpf_clean).first()
+        if not user:
+            return jsonify({'error': 'Usuário não encontrado'}), 404
+        
+        # Verificar se o UUID já está sendo usado por outro usuário
+        nfc_uuid = data['nfc_card_uuid']
+        existing_user = User.query.filter_by(nfc_card_uuid=nfc_uuid).first()
+        if existing_user and existing_user.id != user.id:
+            return jsonify({'error': 'UUID do cartão NFC já está associado a outro usuário'}), 400
+        
+        # Atualizar o nfc_card_uuid do usuário
+        user.nfc_card_uuid = nfc_uuid
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Cartão NFC associado com sucesso',
+            'user': user.to_dict(),
+            'nfc_card_uuid': user.nfc_card_uuid
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# 5.1. Rota para buscar usuário por UUID de cartão NFC (consulta)
 @app.route('/api/users/nfc/<string:nfc_uuid>', methods=['GET'])
 def get_user_by_nfc(nfc_uuid):
     try:
