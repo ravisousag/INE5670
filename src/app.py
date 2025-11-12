@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from models.user import db, User
+from models.log import Log
 import os
 import re
 
@@ -279,15 +280,35 @@ def get_user_by_nfc(nfc_uuid):
     try:
         user = User.query.filter_by(nfc_card_uuid=nfc_uuid).first()
         
-        if not user:
+        # Gravar log de acesso (sempre, mesmo se usuário não for encontrado)
+        if user:
+            # Usuário encontrado
+            log = Log(
+                user_id=user.id,
+                nfc_uuid=nfc_uuid,
+                user_exists=True
+            )
+            db.session.add(log)
+            db.session.commit()
+            
+            return jsonify({
+                'user': user.to_dict(),
+                'nfc_card_uuid': user.nfc_card_uuid
+            }), 200
+        else:
+            # Usuário não encontrado - gravar log indicando usuário inexistente
+            log = Log(
+                user_id=None,
+                nfc_uuid=nfc_uuid,
+                user_exists=False
+            )
+            db.session.add(log)
+            db.session.commit()
+            
             return jsonify({'error': 'Usuário não encontrado para este UUID de cartão NFC'}), 404
         
-        return jsonify({
-            'user': user.to_dict(),
-            'nfc_card_uuid': user.nfc_card_uuid
-        }), 200
-        
     except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 # Rota adicional: Listar todos os usuários
