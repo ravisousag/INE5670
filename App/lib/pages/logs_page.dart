@@ -27,9 +27,11 @@ class _LogsPageState extends State<LogsPage> {
     try {
       logs = await ApiService.getLogs();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Erro: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erro: $e")));
+      }
     }
 
     setState(() => loading = false);

@@ -3,15 +3,16 @@ import 'package:http/http.dart' as http;
 
 import '../models/user.dart';
 import '../models/log_entry.dart';
+import 'services/nfc_service.dart';
 
 class ApiService {
-  static const base = 'http://192.168.0.146:5000/api';
+  static const base = 'http://127.0.0.1:5000';
 
   // -------------------------
   // USERS
   // -------------------------
   static Future<List<User>> getUsers() async {
-    final url = Uri.parse('$base/users');
+    final url = Uri.parse('$base/api/users');
     final res = await http.get(url);
 
     final data = jsonDecode(res.body);
@@ -20,8 +21,8 @@ class ApiService {
     return users.map((e) => User.fromJson(e)).toList();
   }
 
-  static Future<String> createUser(Map<String, dynamic> body) async {
-    final url = Uri.parse('$base/users');
+  static Future<Map<String, dynamic>> createUser(Map<String, dynamic> body) async {
+    final url = Uri.parse('$base/api/users');
 
     final res = await http.post(
       url,
@@ -34,15 +35,15 @@ class ApiService {
       throw Exception(data['error'] ?? 'Erro desconhecido ao criar usuário');
     }
 
-    // Garantir retorno SEMPRE
-    return data['message'] ?? 'Usuário criado com sucesso';
+    // Retornar o objeto de resposta completo (inclui 'user' e 'message')
+    return data as Map<String, dynamic>;
   }
 
   static Future<String> updateUser(
     String cpf,
     Map<String, dynamic> body,
   ) async {
-    final url = Uri.parse('$base/users/cpf/$cpf');
+    final url = Uri.parse('$base/api/users/cpf/$cpf');
 
     final res = await http.put(
       url,
@@ -55,12 +56,11 @@ class ApiService {
       throw Exception(data['error'] ?? 'Erro desconhecido ao criar usuário');
     }
 
-    // Garantir retorno SEMPRE
     return data['message'] ?? 'Usuário criado com sucesso';
   }
 
   static Future<String> deleteUser(String cpf) async {
-    final url = Uri.parse('$base/users/cpf/$cpf');
+    final url = Uri.parse('$base/api/users/cpf/$cpf');
     final res = await http.delete(url);
 
     final data = jsonDecode(res.body);
@@ -68,7 +68,6 @@ class ApiService {
       throw Exception(data['error'] ?? 'Erro desconhecido ao criar usuário');
     }
 
-    // Garantir retorno SEMPRE
     return data['message'] ?? 'Usuário criado com sucesso';
   }
 
@@ -76,7 +75,7 @@ class ApiService {
   // LOGS
   // -------------------------
   static Future<List<LogEntry>> getLogs() async {
-    final url = Uri.parse('$base/logs');
+    final url = Uri.parse('$base/api/logs');
     final res = await http.get(url);
 
     final data = jsonDecode(res.body);
@@ -85,16 +84,31 @@ class ApiService {
     return logs.map((e) => LogEntry.fromJson(e)).toList();
   }
 
-  // LISTAR CARTÕES NFC
-  static Future<Map<String, dynamic>> listCards() async {
-    final url = Uri.parse('$base/nfc/all');
-    final res = await http.get(url);
+  // -------------------------
+  // NFC INTEGRATION
+  // -------------------------
 
-    if (res.statusCode != 200) {
-      throw Exception("Erro ao buscar cartões NFC");
+  /// Vincula um cartão NFC a um usuário
+  static Future<String> linkNfcToUser(String nfcCardUuid, String cpf) async {
+    try {
+      final result = await NfcService.linkNfcToUser(nfcCardUuid, cpf);
+      return result['message'] ?? 'Cartão vinculado com sucesso';
+    } catch (e) {
+      throw Exception(e.toString());
     }
-
-    final data = jsonDecode(res.body);
-    return data;
   }
+
+
+
+  /// Remove associação de cartão NFC
+  static Future<String> unlinkNfcFromUser(String cpf) async {
+    try {
+      final result = await NfcService.unlinkNfcFromUser(cpf);
+      return result['message'] ?? 'Cartão desvinculado com sucesso';
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+
 }

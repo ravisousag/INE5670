@@ -39,14 +39,6 @@ class HomePage extends StatelessWidget {
           subtitle: "Histórico de acessos NFC",
           onTap: () => goTo('logs'),
         ),
-
-        _menuCard(
-          icon: Icons.credit_card,
-          color: Colors.purple,
-          title: "Cartões NFC",
-          subtitle: "Associar cartões aos usuários",
-          onTap: () {},
-        ),
       ],
     );
   }
