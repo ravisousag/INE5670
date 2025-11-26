@@ -6,11 +6,11 @@
 #include <ArduinoJson.h>
 
 // ---- CONFIG Wi-Fi ----
-const char *ssid = "Ravi";
-const char *pass = "!6bxupdTA5t";
+const char *ssid = "Wifi_bruno";
+const char *pass = "12345678";
 
 // ---- CONFIG API ----
-const char *api_server = "http://192.168.1.229:5000";
+const char *api_server = "http://10.225.148.208:5000";
 
 // ---- CONFIG PN532 (I2C) ----
 #define PN532_IRQ -1

@@ -1,4 +1,4 @@
-#!/home/ravi/Documentos/Projetos/Meus/INE5670/INE5670/.env/bin/python3
+#!/home/ravi/Documentos/Projetos/Meus/INE5670/Back/.env/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

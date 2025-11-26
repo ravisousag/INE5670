@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from .user import db
+from .user import db, get_brt_now
 
 
 class PairingSession(db.Model):
@@ -10,7 +10,7 @@ class PairingSession(db.Model):
     id = Column(Integer, primary_key=True)
     pair_token = Column(String(64), unique=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=get_brt_now)
     expires_at = Column(DateTime, nullable=False)
     vinculado = Column(Boolean, default=False)
 

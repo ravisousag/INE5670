@@ -356,10 +356,10 @@ def pair_start():
 
         # Gerar token simples (hex groups)
         import secrets
+        from datetime import datetime, timedelta
         token_raw = secrets.token_hex(8).upper()
         pair_token = f"{token_raw[0:4]}-{token_raw[4:8]}-{token_raw[8:12]}"
 
-        from datetime import datetime, timedelta
         expires_at = datetime.utcnow() + timedelta(seconds=60)
 
         session = PairingSession(
@@ -461,7 +461,7 @@ def pair_status(pair_token):
             'vinculado': bool(session.vinculado),
             'expired': expired,
             'user': user.to_dict() if user else None,
-            'expires_at': session.expires_at.isoformat()
+            'expires_at': session.expires_at.isoformat() if session.expires_at else None
         }), 200
 
     except Exception as e:

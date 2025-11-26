@@ -82,11 +82,13 @@ class NfcService {
   }
 
   /// Consulta o status de um token de pareamento
+  /// Retorna o status ou lança exceção se houver erro
   static Future<Map<String, dynamic>> getPairStatus(String pairToken) async {
     final url = Uri.parse('$base/api/nfc/pair_status/$pairToken');
     final res = await http.get(url);
 
     final data = jsonDecode(res.body);
+    
     if (res.statusCode != 200) {
       throw Exception(data['error'] ?? 'Erro ao consultar status de pareamento');
     }

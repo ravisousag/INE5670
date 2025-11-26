@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import '../services/nfc_service.dart';
 import 'dart:async';
-import '../models/user.dart';
 
 class UserNfcModal extends StatefulWidget {
-  final User user;
+  final String cpf;
   final VoidCallback onSuccess;
 
   const UserNfcModal({
     super.key,
-    required this.user,
+    required this.cpf,
     required this.onSuccess,
   });
 
@@ -57,7 +56,7 @@ class _UserNfcModalState extends State<UserNfcModal> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Usuário: ${widget.user.name}',
+              'CPF: ${widget.cpf}',
               style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 24),
@@ -229,8 +228,9 @@ class _UserNfcModalState extends State<UserNfcModal> {
     });
 
     try {
-      final resp = await NfcService.startPairing(widget.user.cpf);
+      final resp = await NfcService.startPairing(widget.cpf);
       final token = resp['pair_token'];
+      
       setState(() {
         _pairToken = token;
       });
@@ -255,7 +255,7 @@ class _UserNfcModalState extends State<UserNfcModal> {
             widget.onSuccess();
             // Close modal after short delay
             await Future.delayed(const Duration(seconds: 1));
-            if (mounted) Navigator.pop(context);
+            Navigator.pop(context);
           } else if (expired) {
             setState(() {
               _errorMessage = 'Sessão de pareamento expirada. Tente novamente.';
@@ -264,10 +264,10 @@ class _UserNfcModalState extends State<UserNfcModal> {
             _pairingTimer?.cancel();
           }
         } catch (e) {
-          // ignore transient polling errors but show message
           setState(() {
-            _errorMessage = 'Erro ao consultar status de pareamento.';
+            _errorMessage = 'Erro ao consultar status de pareamento';
           });
+          _pairingTimer?.cancel();
         }
       });
     } catch (e) {
@@ -285,7 +285,7 @@ class _UserNfcModalState extends State<UserNfcModal> {
       // Vincular o UUID ao usuário
       await NfcService.linkNfcToUser(
         _detectedUuid!,
-        widget.user.cpf,
+        widget.cpf,
       );
 
       setState(() {
@@ -295,10 +295,8 @@ class _UserNfcModalState extends State<UserNfcModal> {
       // Esperar um pouco e fechar o modal
       await Future.delayed(const Duration(seconds: 2));
 
-      if (mounted) {
-        widget.onSuccess();
-        Navigator.pop(context);
-      }
+      widget.onSuccess();
+      Navigator.pop(context);
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');

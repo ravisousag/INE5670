@@ -188,23 +188,14 @@ class _UserModalState extends State<UserModal> {
     };
 
     try {
-      // Criar usuário e obter o usuário criado na resposta
       final resp = await ApiService.createUser(body);
-      final createdUser = resp['user'];
 
       // Após criar, oferecer opção de vincular NFC
-      if (mounted) {
-        // Capture a parent navigator context before popping this dialog
-        final parentContext = Navigator.of(context).context;
-
-        widget.onSuccess();
-        Navigator.pop(context);
-
-        // Mostrar opção de vincular NFC passando o usuário criado
-        _showNfcLinkDialog(parentContext, createdUser);
-      }
+      _showNfcLinkDialog(resp['user']);
+      widget.onSuccess();
+      Navigator.pop(context);
     } catch (e) {
-      _err(e.toString());
+      _err(e.toString().replaceAll('Exception: ', ''));
     }
   }
 
@@ -231,9 +222,9 @@ class _UserModalState extends State<UserModal> {
     }
   }
 
-  void _showNfcLinkDialog(BuildContext parentCtx, [Map<String, dynamic>? createdUser]) {
+  void _showNfcLinkDialog(Map<String, dynamic> createdUser) {
     showDialog(
-      context: parentCtx,
+      context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Associar Cartão NFC'),
         content: const Text('Deseja associar um cartão NFC a este usuário agora?'),
@@ -245,11 +236,11 @@ class _UserModalState extends State<UserModal> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              // Open NFC modal using the parent context to ensure it's mounted
+              // Open NFC modal
               showDialog(
-                context: parentCtx,
+                context: ctx,
                 builder: (c) => UserNfcModal(
-                  user: createdUser != null ? User.fromJson(createdUser) : widget.user!,
+                  cpf: createdUser['cpf'],
                   onSuccess: () {
                     widget.onSuccess();
                     setState(() {
@@ -268,20 +259,16 @@ class _UserModalState extends State<UserModal> {
 
   void _openNfcModal() {
     // Use the navigator's context to ensure the dialog is shown on the current
-    // route's BuildContext. Guard with mounted for safety.
-    if (!mounted) return;
-    final parentCtx = Navigator.of(context).context;
+    // route's BuildContext.
     showDialog(
-      context: parentCtx,
+      context: context,
       builder: (ctx) => UserNfcModal(
-        user: widget.user!,
+        cpf: widget.user!.cpf,
         onSuccess: () {
           widget.onSuccess();
-          if (mounted) {
-            setState(() {
-              _hasNfc = true;
-            });
-          }
+          setState(() {
+            _hasNfc = true;
+          });
         },
       ),
     );
@@ -316,9 +303,7 @@ class _UserModalState extends State<UserModal> {
       setState(() {
         _hasNfc = false;
       });
-      if (mounted) {
-        _err('Cartão NFC removido com sucesso');
-      }
+      _err('Cartão NFC removido com sucesso');
     } catch (e) {
       _err(e.toString().replaceAll('Exception: ', ''));
     }

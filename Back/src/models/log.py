@@ -1,4 +1,4 @@
-from models.user import db
+from models.user import db, get_brt_now
 from datetime import datetime
 
 class Log(db.Model):
@@ -9,7 +9,7 @@ class Log(db.Model):
     nfc_uuid = db.Column(db.String(36), nullable=False)
     user_exists = db.Column(db.Boolean, default=True, nullable=False)
     action = db.Column(db.String(50), default='ACCESS', nullable=False)  # REGISTER, LINK, UNLINK, ACCESS_GRANTED, ACCESS_DENIED
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, default=get_brt_now, nullable=False)
     
     # Relacionamento com User
     user = db.relationship('User', backref='logs')

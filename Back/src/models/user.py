@@ -1,7 +1,14 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 db = SQLAlchemy()
+
+# BRT timezone (UTC-3)
+BRT = timezone(timedelta(hours=-3))
+
+def get_brt_now():
+    """Retorna o datetime atual em BRT"""
+    return datetime.now(BRT)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -12,8 +19,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     nfc_card_uuid = db.Column(db.String(36), unique=True, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_brt_now)
+    updated_at = db.Column(db.DateTime, default=get_brt_now, onupdate=get_brt_now)
     
     def to_dict(self):
         return {
