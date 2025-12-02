@@ -1,140 +1,68 @@
-# Front — Aplicação Flutter
+# INE5670 — Frontend (Flutter)
 
-Visão geral
-----------
-Este diretório contém a aplicação front-end desenvolvida com Flutter/Dart para o projeto INE5670. A interface comunica-se com o backend para coletar e exibir dados dos dispositivos e serviços do sistema móvel/embarcado.
+Aplicativo Flutter para gerenciar usuários e pareamento NFC com o backend Flask.
 
-Principais objetivos
-- Aplicação multiplataforma (Android, iOS, Web, desktop).
-- Interface para visualização, controle e configuração de dispositivos.
-- Comunicação segura e configurável com o backend.
+## Resumo
+- Flutter app com páginas: `home`, `users`, `logs`.
+- Implementa fluxo de pareamento token-based com polling via `user_nfc_modal`.
 
-Pré-requisitos
---------------
-- Flutter SDK (recomendado canal stable) — https://flutter.dev
-- Dart (vem com o Flutter)
-- Android SDK / Xcode (para builds mobile)
-- Ferramentas de linha de comando: git
-- (Opcional) Chrome para execução web local
+## Pré-requisitos
+- Flutter SDK (recomenda-se a versão estável mais recente)
+- Emulador Android/iOS ou dispositivo físico conectado
 
-Instalação (local)
-------------------
-1. Clone o repositório (se necessário):
-   git clone https://github.com/ravisousag/INE5670.git
-   cd INE5670/Front
+## Setup
+No diretório `Front/` (ou onde estiver o código Flutter):
 
-2. Instale dependências:
-   flutter pub get
+```bash
+cd ~/Documentos/Projetos/Meus/INE5670/Front
+flutter pub get
+```
 
-3. Configure variáveis de ambiente do app (se aplicável):
-   - Se o projeto usar pacotes como flutter_dotenv, crie um arquivo `.env` na raiz do Front com chaves como:
-     BACKEND_BASE_URL=http://localhost:8000
-     API_KEY=seu_token_aqui
-   - Caso não utilize `.env`, verifique a constante de base URL em `lib/` e ajuste conforme necessário.
+Se for executar no dispositivo físico, ajuste a URL base do backend (`ApiService.base`) para o IP da máquina onde o backend roda, por exemplo `http://192.168.1.229:5000`.
 
-Execução (desenvolvimento)
---------------------------
-- Emulador Android:
-  flutter run -d emulator-5554
-- iOS (macOS com Xcode):
-  flutter run -d <device-id>
-- Web (Chrome):
-  flutter run -d chrome
-- Desktop (se habilitado):
-  flutter run -d windows|linux|macos
+## Rodando o app
 
-Builds para produção
---------------------
-- Android (APK):
-  flutter build apk --release
-- Android (App Bundle):
-  flutter build appbundle --release
-- iOS:
-  flutter build ios --release
-- Web:
-  flutter build web
+```bash
+flutter run
+```
 
-Estrutura do diretório
-----------------------
-- android/, ios/, web/, macos/, windows/, linux/ — plataformas geradas pelo Flutter
-- lib/ — código fonte Dart/Flutter
-  - main.dart — ponto de entrada
-  - (possíveis) pastas: app/, features/, core/, shared/
-- pubspec.yaml — dependências e assets
-- analysis_options.yaml — regras de lint/analysis
+ou para abrir no emulador:
 
-Arquitetura recomendada
-----------------------
-- Separar camadas: apresentação (widgets), estado (provider/bloc/riverpod), domínio (models), infra (serviços HTTP, repositórios).
-- Exemplo de organização:
-  lib/
-    ├─ main.dart
-    ├─ app/
-    ├─ features/
-    ├─ core/
-    └─ shared/
+```bash
+flutter emulators
+flutter emulators --launch <ID>
+flutter run
+```
 
-Integração com o backend
-------------------------
-- Centralize a URL base do backend em uma única constante/arquivo de configuração.
-- Exemplo (pseudo):
-  const String BASE_URL = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: 'http://localhost:8000');
+## Principais pontos de integração
+- O serviço HTTP está em `lib/api_service.dart` e `lib/services/nfc_service.dart`.
+- Fluxo de pareamento:
+  - `startPairing(cpf)` chama `POST /api/nfc/pair_start` e recebe `pair_token`;
+  - `user_nfc_modal.dart` faz polling em `GET /api/nfc/pair_status/<pair_token>` até `vinculado=true`;
+  - Arduino faz `POST /api/nfc/sync` para concluir o pareamento.
 
-- Exemplo de requisição com http:
-  final response = await http.get(Uri.parse('$BASE_URL/api/resource'));
+## Funcionalidades UI
+- `users_page.dart` — criar/editar/remover usuários. Ao criar, é possível iniciar pareamento.
+- `logs_page.dart` — exibe logs de acesso e ações (LINK/UNLINK/ACCESS_GRANTED/...)
 
-Tratamento de erros e timeouts
-------------------------------
-- Defina timeouts nas requisições (ex: timeout: Duration(seconds: 10)).
-- Mostre mensagens de erro amigáveis ao usuário e logs detalhados em modo debug.
+## Testes e simulações
+- Para testar sem Arduino, gere um `pair_token` pelo backend e depois simule o Arduino:
 
-Testes
-------
-- Testes de unidade:
-  flutter test
-- Testes de widget:
-  flutter test
-- Recomendação: configurar CI para rodar testes em cada PR.
+```bash
+# gerar token (substitua CPF)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"cpf":"12345678900"}' \
+  http://127.0.0.1:5000/api/nfc/pair_start
 
-Linting e formatação
---------------------
-- Rodar análise:
-  dart analyze
-- Formatar:
-  flutter format .
+# depois simule sync com o UUID
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"nfc_card_uuid":"9F48-4D3F-1BE7"}' \
+  http://127.0.0.1:5000/api/nfc/sync
+```
 
-CI sugerido (GitHub Actions)
-----------------------------
-- Workflow mínimo:
-  - Checkout
-  - Setup Flutter
-  - flutter pub get
-  - dart analyze
-  - flutter test
-  - (opcional) build
+## Notas
+- Se o app rodar em um dispositivo físico, `http://127.0.0.1:5000` não apontará para seu host — use o IP da máquina de desenvolvimento.
+- A página `list_cards_page.dart` foi removida (não utilizada).
 
-Segurança
---------
-- Nunca comitar chaves ou tokens em texto plano.
-- Use variáveis de ambiente/segredos de CI para chaves de produção.
-- Habilite HTTPS no backend e valide certificados quando necessário.
-
-Boas práticas de contribuição
------------------------------
-- Use branches por feature: feature/nome
-- Faça commits pequenos e atômicos com mensagens claras.
-- Abra Pull Requests com descrição das mudanças e screenshots se for UI.
-
-Solução de problemas (comuns)
------------------------------
-- Erro “Missing SDK” — rode `flutter doctor` e instale dependências.
-- Problemas com certificados HTTPS locais — use `flutter run --web-hostname=localhost` ou configure um certificado local confiável.
-- Dependências quebradas — delete `.packages` e `pubspec.lock` e rode `flutter pub get`.
-
-Contato
--------
-Para dúvidas relacionadas ao front, abra uma issue ou contate o mantenedor do repositório.
-
-Licença
--------
-Ver arquivo LICENSE na raiz do repositório (se aplicável).
+---
+Arquivo gerado automaticamente. Peça para eu ajustar instruções específicas de ambiente ou adicionar passos de build/CI.
