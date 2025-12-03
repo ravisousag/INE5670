@@ -668,6 +668,56 @@ Retorna lista de logs de acesso
 
 ---
 
+## 🗺️ Referência de Rotas da API (Resumo)
+
+Esta seção traz um resumo rápido das rotas disponíveis no backend, métodos aceitos e exemplos de responses. Para detalhes completos, consulte `/Back/DOCUMENTACAO.md`.
+
+- **POST** `/api/users` — Criar usuário
+  - Body: `{ name, cpf, email, phone }`
+  - Responses: `201` (created, retorna `user`), `400` validação, `500` erro
+
+- **GET** `/api/users` — Listar usuários
+  - Responses: `200` com `{ users, total }`, `500` erro
+
+- **GET** `/api/users/cpf/{cpf}` — Obter usuário por CPF
+  - Params: `cpf` (string)
+  - Responses: `200` com `{ user }`, `400` CPF inválido, `404` não encontrado
+
+- **PUT** `/api/users/cpf/{cpf}` — Atualizar usuário
+  - Body (opcional): `{ name?, email?, phone?, cpf?, nfc_card_uuid? }`
+  - Responses: `200` (retorna `user`), `400` validação, `404` não encontrado, `409` conflito
+
+- **DELETE** `/api/users/cpf/{cpf}` — Deletar usuário
+  - Responses: `200` (mensagem), `400` CPF inválido, `404` não encontrado
+
+- **POST** `/api/nfc/pair_start` — Iniciar pareamento
+  - Body: `{ cpf }`
+  - Responses: `201` (retorna `pair_token`, `expires_at`), `400`, `404`, `409`
+
+- **GET** `/api/nfc/pair_status/{pair_token}` — Status do pareamento
+  - Params: `pair_token`
+  - Responses: `200` com `{ vinculado, expired, user?, expires_at }`, `404` token não encontrado
+
+- **POST** `/api/nfc/sync` — Sincronização (Arduino)
+  - Body: `{ nfc_card_uuid }`
+  - Responses: `200` (linked true + `user`), `400` (missing), `404` (sem sessão), `409` (uuid já vinculado)
+
+- **PUT** `/api/nfc/link` — Vincular NFC manualmente
+  - Body: `{ nfc_card_uuid, cpf }`
+  - Responses: `200` (mensagem + `user`), `400`, `404`, `409`
+
+- **PUT** `/api/nfc/unlink` — Desvincular NFC
+  - Body: `{ cpf }`
+  - Responses: `200` (mensagem + `user`), `400`, `404`
+
+- **GET** `/api/nfc/validate/{nfc_uuid}` — Validar cartão NFC
+  - Params: `nfc_uuid`
+  - Responses: `200` (authorized true + `user` + `log_id`), `404` (authorized false + `log_id`)
+
+- **GET** `/api/logs` — Listar logs
+  - Responses: `200` com `{ logs, total }`, `500` erro
+
+
 ## 🚀 Executando a Aplicação
 
 ```bash
